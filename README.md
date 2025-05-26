@@ -50,8 +50,9 @@ TETEU é um assistente de programação em Python que integra múltiplas IAs (Op
 
 ## 💡 Meu papel no projeto
 
-Atuei como **guia e organizador** deste projeto colaborativo, definindo funcionalidades, integrando ideias e testando o sistema.  
-Aprendi sobre APIs de IA, automação de testes, integração de ferramentas Python e organização de projetos em equipe.
+Desenvolvi este projeto **individualmente**, contando com o auxílio de ferramentas de IA como o GitHub Copilot para acelerar o desenvolvimento, solucionar dúvidas e aprimorar o código.  
+Implementei, adaptei e testei todas as funcionalidades, além de integrar diferentes APIs e ferramentas Python.  
+Durante o processo, aprimorei meus conhecimentos em APIs de IA, automação de testes, integração de ferramentas Python e organização de projetos.
 
 ---
 
