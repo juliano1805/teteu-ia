@@ -18,6 +18,12 @@ from teteu import (
     resumir_texto,
     explicar_codigo,
     explicar_erro,
+    corrigir_codigo,
+    sugerir_materiais,
+    quiz_programacao,
+    desafio_programacao,
+    explicar_biblioteca,
+    sugerir_projetos,
 )
 
 # Substitua a configuração da API key:
@@ -520,3 +526,52 @@ def mostrar_historico_interface(limite=10):
         return texto
     else:
         return "📭 Histórico vazio."
+
+class TestTeteuIA(unittest.TestCase):
+    def test_resumir_texto(self):
+        resumo = resumir_texto("Python é uma linguagem de programação.")
+        self.assertIsInstance(resumo, str)
+        self.assertTrue(len(resumo) > 0)
+
+    def test_explicar_codigo(self):
+        explicacao = explicar_codigo('print("Olá")')
+        self.assertIsInstance(explicacao, str)
+        self.assertIn("print", explicacao.lower())
+
+    def test_explicar_erro(self):
+        erro = explicar_erro("NameError: name 'x' is not defined")
+        self.assertIsInstance(erro, str)
+        self.assertTrue("nameerror" in erro.lower() or "erro" in erro.lower())
+
+    def test_corrigir_codigo(self):
+        correcao = corrigir_codigo('prnt("oi")')
+        self.assertIsInstance(correcao, str)
+        self.assertTrue("print" in correcao.lower() or "erro" in correcao.lower())
+
+    def test_sugerir_materiais(self):
+        materiais = sugerir_materiais()
+        self.assertIsInstance(materiais, str)
+        self.assertTrue("python" in materiais.lower())
+
+    def test_quiz_programacao(self):
+        quiz = quiz_programacao()
+        self.assertIsInstance(quiz, str)
+        self.assertTrue("alternativa" in quiz.lower() or "resposta correta" in quiz.lower())
+
+    def test_desafio_programacao(self):
+        desafio = desafio_programacao()
+        self.assertIsInstance(desafio, str)
+        self.assertTrue("python" in desafio.lower())
+
+    def test_explicar_biblioteca(self):
+        explicacao = explicar_biblioteca("math")
+        self.assertIsInstance(explicacao, str)
+        self.assertTrue("math" in explicacao.lower())
+
+    def test_sugerir_projetos(self):
+        projetos = sugerir_projetos("iniciante")
+        self.assertIsInstance(projetos, str)
+        self.assertTrue("projeto" in projetos.lower() or "python" in projetos.lower())
+
+if __name__ == "__main__":
+    unittest.main()

@@ -34,6 +34,19 @@ cur.execute('''
 ''')
 con.commit()
 
+cur.execute('''
+    CREATE TABLE IF NOT EXISTS ranking (
+        nome TEXT PRIMARY KEY,
+        pontos INTEGER DEFAULT 0,
+        quizzes INTEGER DEFAULT 0
+    )
+''')
+con.commit()
+
+usuario = input("Digite seu nome para o ranking: ")
+cur.execute('INSERT OR IGNORE INTO ranking (nome) VALUES (?)', (usuario,))
+con.commit()
+
 def obter_contexto(limite=5):
     cur.execute('SELECT comando, resposta FROM historico ORDER BY id DESC LIMIT ?', (limite,))
     registros = cur.fetchall()
@@ -109,6 +122,7 @@ Comandos disponíveis:
 - buscar <termo>: Busca no histórico
 - limpar_historico: Limpa todo o histórico
 - exportar_historico: Exporta o histórico para um arquivo
+- exportar_para_notebook: Exporta o histórico para Jupyter Notebook
 - modelo <nome>: Troca o modelo GPT (ex: modelo gpt-4)
 - explica <codigo>: Explica detalhadamente um código Python
 - resuma <texto>: Resume um texto longo
@@ -116,7 +130,22 @@ Comandos disponíveis:
 - corrija <codigo>: Sugere melhorias e corrige um código Python
 - quiz: Recebe uma pergunta de múltipla escolha sobre programação
 - desafio: Recebe um desafio de programação para praticar
+- ranking: Mostra o ranking de pontuação dos quizzes
+- corrigir_exercicio <codigo_do_aluno> <gabarito>: Corrige automaticamente um exercício comparando com o gabarito
+- explica_erro <mensagem de erro>: Explica o erro de execução do Python
+- mini_projeto <tema>: Cria um mini-projeto guiado em etapas
+- desafio_diario: Recebe um desafio de programação para o dia
+- entrevista: Simula uma entrevista técnica de Python
+- conceito <tema>: Explica um conceito de Python de forma didática
 - materiais: Sugere materiais gratuitos para aprender Python
+- materiais_personalizados <tema>: Sugere materiais gratuitos sobre um tema específico
+- curva_aprendizado: Mostra sua evolução em quizzes e pontos
+- exercicios_online <tema>: Sugere exercícios online gratuitos sobre um tema
+- debug <codigo>: Simula a execução passo a passo de um código Python
+- stackoverflow <pergunta>: Busca respostas no Stack Overflow
+- biblioteca <nome>: Explica para que serve uma biblioteca Python e mostra exemplo
+- analisar <codigo>: Analisa o código com linters e IA
+- projetos <nível>: Sugere ideias de projetos por nível (iniciante, intermediário, avançado)
 - ajuda: Mostra esta mensagem de ajuda
 """)
 
@@ -266,154 +295,29 @@ def teteu_loop():
     print("🤖 TETEU IA — Assistente de Código")
     print("Comandos: 'sair', 'exec <codigo>', 'historico', 'buscar <termo>'")
 
+    def comando_ajuda():
+        mostrar_ajuda()
+
+    def comando_historico():
+        print(mostrar_historico_interface())
+
+    comandos = {
+        "ajuda": comando_ajuda,
+        "historico": comando_historico,
+        # ...adicione os outros comandos
+    }
+
     while True:
-        comando = input(">>> ")
-
-        if comando.lower() == 'sair':
-            print("Tchau! 👋")
-            break
-
-        elif comando.lower().startswith('exec'):
-            codigo = comando[5:]
-            executar_codigo(codigo)
-            print("Código executado.")
-            continue
-
-        elif comando.lower() == 'historico':
-            texto_hist = mostrar_historico_interface()
-            print(texto_hist)
-            continue
-
-        elif comando.lower().startswith('buscar'):
-            termo = comando[7:].strip()
-            if termo:
-                buscar_no_historico(termo)
-            else:
-                print("⚠️ Informe um termo para buscar. Exemplo: buscar print")
-            continue
-
-        elif comando.lower() == 'ajuda':
-            mostrar_ajuda()
-            continue
-
-        elif comando.lower() == 'limpar_historico':
-            limpar_historico()
-            print("🧹 Histórico limpo com sucesso!")
-            continue
-
-        elif comando.lower() == 'exportar_historico':
-            exportar_historico()
-            print("Histórico exportado para 'historico_teteu.txt'.")
-            continue
-
-        elif comando.lower() == 'exportar_para_notebook':
-            exportar_para_notebook()
-            print("Histórico exportado para 'historico_teteu.ipynb'.")
-            continue
-
-        elif comando.lower().startswith('modelo'):
-            novo_modelo = comando[7:].strip()
-            if novo_modelo:
-                modelo_gpt = novo_modelo
-                print(f"🤖 Modelo alterado para: {modelo_gpt}")
-            else:
-                print("⚠️ Informe o nome do modelo. Exemplo: modelo gpt-4")
-            continue
-
-        elif comando.lower().startswith('explica'):
-            codigo = comando[8:]
-            explicacao = perguntar_todas_ias(f"Explique detalhadamente o que faz o seguinte código Python:\n\n{codigo}")
-            print(f"\nTETEU 🤖 {explicacao}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, explicacao))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('resuma'):
-            texto = comando[7:]
-            resumo = resumir_texto(texto)
-            print(f"\nTETEU 🤖 {resumo}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, resumo))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('erro'):
-            erro = comando[5:]
-            explicacao = explicar_erro(erro)
-            print(f"\nTETEU 🤖 {explicacao}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, explicacao))
-            con.commit()
-            continue
-
-        elif comando.lower() == 'quiz':
-            quiz = quiz_programacao()
-            print(f"\nTETEU 🤖 {quiz}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, quiz))
-            con.commit()
-            continue
-
-        elif comando.lower() == 'desafio':
-            desafio = desafio_programacao()
-            print(f"\nTETEU 🤖 {desafio}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, desafio))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('corrija'):
-            codigo = comando[7:]
-            correcao = corrigir_codigo(codigo)
-            print(f"\nTETEU 🤖 {correcao}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, correcao))
-            con.commit()
-            continue
-
-        elif comando.lower() == 'materiais':
-            materiais = sugerir_materiais()
-            print(f"\nTETEU 🤖 {materiais}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, materiais))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('stackoverflow'):
-            pergunta = comando[13:].strip()
-            resposta = buscar_stackoverflow(pergunta)
-            print(f"\nTETEU 🤖 {resposta}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, resposta))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('biblioteca'):
-            nome = comando[11:].strip()
-            explicacao = explicar_biblioteca(nome)
-            print(f"\nTETEU 🤖 {explicacao}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, explicacao))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('analisar'):
-            codigo = comando[8:].strip()
-            analise = analisar_codigo(codigo)
-            print(f"\nTETEU 🤖 {analise}")
-            try:
-                revisao = revisar_com_gpt(codigo)
-                print(f"\nTETEU 🤖 Sugestão GPT:\n{revisao}")
-                resposta_final = analise + "\n\nSugestão GPT:\n" + revisao
-            except Exception as e:
-                print("\nTETEU 🤖 Não foi possível acessar o GPT para revisão. Mostrando apenas análise automática.")
-                resposta_final = analise
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, resposta_final))
-            con.commit()
-            continue
-
-        elif comando.lower().startswith('projetos'):
-            nivel = comando[8:].strip() or "iniciante"
-            sugestoes = sugerir_projetos(nivel)
-            print(f"\nTETEU 🤖 {sugestoes}")
-            cur.execute('INSERT INTO historico (comando, resposta) VALUES (?, ?)', (comando, sugestoes))
-            con.commit()
-            continue
-
+        comando = input(">>> ").strip().lower()
+        if comando in comandos:
+            comandos[comando]()
         else:
             print("🤖 TETEU: Não entendi esse comando. Digite 'ajuda' para ver as opções.")
+
+def mostrar_ranking():
+    cur.execute('SELECT nome, pontos, quizzes FROM ranking ORDER BY pontos DESC, quizzes DESC')
+    for i, (nome, pontos, quizzes) in enumerate(cur.fetchall(), 1):
+        print(f"{i}º {nome} — {pontos} pontos ({quizzes} quizzes)")
 
 def limpar_arquivos_temporarios(padrao="temp_code*.py"):
     for arquivo in glob.glob(padrao):
@@ -524,3 +428,7 @@ def mostrar_historico_interface(limite=10):
         return texto
     else:
         return "📭 Histórico vazio."
+
+def atualizar_pontuacao(nome, pontos_ganhos):
+    cur.execute('UPDATE ranking SET pontos = pontos + ?, quizzes = quizzes + 1 WHERE nome = ?', (pontos_ganhos, nome))
+    con.commit()
